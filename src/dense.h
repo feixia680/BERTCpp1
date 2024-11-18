@@ -27,6 +27,7 @@ namespace lh
 
         private:
             void multiplyweight(std::size_t batch_size, std::size_t seq_len, T *input, T *output);
+            void multiplyweight2(std::size_t batch_size, std::size_t seq_len, T *input, T *output);
             void addbias(std::size_t batch_size, std::size_t seq_len, T *output);
             
             std::size_t input_size_;

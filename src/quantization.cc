@@ -1,12 +1,13 @@
 #include "quantization.h"
 
 namespace lh{
-
+    //Observer 的类，用于观察和跟踪数据集中值的范围
     Observer::Observer(float average_constant){
         min_val_ = NAN;
         max_val_ = NAN;
 
         average_constant_ = average_constant;
+        //平滑常数，用于更新最小值和最大值。该值决定了新观测值对当前记录值的影响程度，更高的值意味着新数据对现有极值的影响更大
     }
 
     Observer::~Observer(){

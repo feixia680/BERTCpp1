@@ -4,6 +4,7 @@
 
 namespace lh
 {   
+    //gelu计算函数
     template<>
     void gelu_<float>(std::size_t size, float* input){
         for(std::size_t i=0; i<size; i++) input[i] = input[i] * 0.5f * (1.0f + erff(input[i] * sqrtf(0.5f)));

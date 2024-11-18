@@ -13,6 +13,13 @@ namespace lh
     }
 
     template <class T>
+    //实现层归一化，将输入按其每个特征的分布进行标准化，并通过可训练的缩放参数（gamma）和偏移参数（beta）恢复表达能力
+    /*实现细节：
+        计算每个序列的均值（mean）。
+        计算方差（variance），并通过平滑避免数值不稳定。
+        利用均值和方差对输入数据进行归一化。
+        使用 gamma 和 beta 对归一化后的数据进行缩放和偏移。
+    */
     Layernorm<T>::Layernorm(std::vector<std::string> names, Graph<T> &pb_graph, std::size_t pre_batch_size, std::size_t pre_seq_len)
     {
         pre_batch_size_ = pre_batch_size;

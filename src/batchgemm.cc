@@ -18,9 +18,11 @@ namespace lh{
         CBLAS_TRANSPOSE tranB = CblasTrans;
         const int m = seq_len, n = seq_len, k = hidden_size, lda_array = hidden_size * num_heads, ldb_array = hidden_size * num_heads, ldc_array = seq_len * num_heads, group_size = batch_size * num_heads;
         const float alpha = 1.0, beta = 0.0;
+        //此处用到了矩阵乘法
         cblas_sgemm_batch(CblasRowMajor, &tranA, &tranB, &m, &n, &k, &alpha, q_array, &lda_array, k_array, &ldb_array, &beta, pointer_qk_array, &ldc_array, 1, &group_size);
         
     }
+    
 
     template<>
     void attn_sv<float>(std::size_t batch_size, std::size_t num_heads, std::size_t seq_len, std::size_t hidden_size, float* sim, float* value, float* output, const float** sim_array, const float** value_array, float** pointer_sv_array){
@@ -38,6 +40,7 @@ namespace lh{
         CBLAS_TRANSPOSE tranB = CblasNoTrans;
         const int m = seq_len, n = hidden_size, k = seq_len, lda_array = seq_len * num_heads, ldb_array = hidden_size * num_heads, ldc_array = hidden_size * num_heads, group_size = batch_size * num_heads;
         const float alpha = 1.0, beta = 0.0;
+        //此处遇到了矩阵乘法
         cblas_sgemm_batch(CblasRowMajor, &tranA, &tranB, &m, &n, &k, &alpha, sim_array, &lda_array, value_array, &ldb_array, &beta, pointer_sv_array, &ldc_array, 1, &group_size);
         
     }

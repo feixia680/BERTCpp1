@@ -5,7 +5,9 @@
 #include "utf8proc.h"
 
 #include "tokenizer.h"
-
+//提供了一个完整的文本预处理和分词工具，
+//适用于深度学习模型尤其是基于Transformer的模型。
+//通过综合使用基础分词和WordPiece算法，可以将文本有效地转换为模型可以处理的形式，
 namespace lh{
     
     void FullTokenizer::convert_tokens_to_ids(const std::vector<std::string> &tokens, uint64_t *ids) {
