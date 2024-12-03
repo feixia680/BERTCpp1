@@ -4,15 +4,115 @@
 #include <fstream>
 #include <iostream>
 #include <chrono>
+#include <algorithm>  // for min
+#include <numeric>    // for accumulate
+#include <iomanip>    // for setprecision
+
 
 using namespace std;
 using namespace lh;
+
+const int SIZE = 10000;
+std::vector<std::vector<float>> mul_table(SIZE, std::vector<float>(SIZE));
+static bool is_initialized = false;
+
+// creat table
+void initialize_mul_table() {
+    if (!is_initialized) {
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                mul_table[i][j] = static_cast<float>(i * j); // Convert result to float
+            }
+        }
+        is_initialized = true;
+    }
+}
+
+// Lookup function for the multiplication table
+float lookup(float i, float j) {
+    int sign = 1;
+
+    // Check sign
+    if ((i < 0 && j > 0) || (i > 0 && j < 0)) {
+        sign = -1;
+    }
+    i = std::abs(i);
+    j = std::abs(j);
+
+    if (!is_initialized) {
+        initialize_mul_table();
+    }
+    float result = 0;
+
+    if ((i >= SIZE) && (j >= SIZE)) {
+        i /= 10;
+        j /= 10;
+        result = mul_table[i][j] * 100;
+    }
+    else if ((i >= SIZE) && (j >= 0 && j < SIZE)) {
+        i /= 10;
+        result = mul_table[i][j] * 10;
+    }
+    else if ((j >= SIZE) && (i >= 0 && i < SIZE)) {
+        j /= 10;
+        result = mul_table[i][j] * 10;
+    }
+    else if ((i >= 0 && i < SIZE) && (j >= 0 && j < SIZE)) {
+        result = mul_table[i][j];
+    }
+    else {
+        throw std::out_of_range("Input values are out of the predefined range");
+    }
+
+    return (result * sign) / 100000000.0f;
+}
+
+// 打印参数信息的函数
+void PrintGraphParameters(const lh::Graph<float>& graph) {
+    for (const auto& entry : graph) {
+        const std::string& name = entry.first;
+        const std::vector<size_t>& dims = entry.second.first;
+        const float* data = entry.second.second;
+
+        std::cout << "Parameter Name: " << name << std::endl;
+
+        // Print dimensions
+        std::cout << "Dimensions: ";
+        for (size_t dim : dims) {
+            std::cout << dim << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "----------------------------------" << std::endl;
+    }
+}
+
+
+void logInputIdsToFile(uint64_t * input_ids, std::size_t batch_size, std::size_t seq_len, const std::string& log_file) {
+    // 打开日志文件
+    std::ofstream logStream(log_file, std::ios::app);
+    if (!logStream.is_open()) {
+        std::cerr << "Failed to open log file: " << log_file << std::endl;
+        return;
+    }
+
+    // 写入 input_ids 的内容
+    logStream << "Logging input_ids:" << std::endl;
+    for (std::size_t batch = 0; batch < batch_size; ++batch) {
+        logStream << "Batch " << batch << ": ";
+        for (std::size_t seq = 0; seq < seq_len; ++seq) {
+            logStream << input_ids[batch * seq_len + seq] << " ";
+        }
+        logStream << std::endl;
+    }
+
+    logStream.close();
+}
 
 int main()
 {
     Model model;
     Graph<float> graph;
-    fstream input("/home/dell/Desktop/bert-cpp/model/model.proto", ios::in | ios::binary);
+    fstream input("/workspace/model/model.bin", ios::in | ios::binary);
     if (!model.ParseFromIstream(&input))
     {
         throw std::invalid_argument("can not read protofile");
@@ -36,6 +136,8 @@ int main()
         graph[paramter.name()] = make_pair(dims, data);
     }
     google::protobuf::ShutdownProtobufLibrary();
+    // 打印参数信息
+    //PrintGraphParameters(graph);
     cout << "load paramter from protobuf successly!" << endl;
 
     size_t pre_batch_size = 100;
@@ -46,39 +148,39 @@ int main()
     size_t intermediate_ratio = 4;
     size_t num_layers = 12;
     vector<string> names;
-    names.push_back("bert.embeddings.word_embeddings.weight");
-    names.push_back("bert.embeddings.position_embeddings.weight");
-    names.push_back("bert.embeddings.token_type_embeddings.weight");
-    names.push_back("bert.embeddings.LayerNorm.gamma");
-    names.push_back("bert.embeddings.LayerNorm.beta");
+    names.push_back("embeddings.word_embeddings.weight");
+    names.push_back("embeddings.position_embeddings.weight");
+    names.push_back("embeddings.token_type_embeddings.weight");
+    names.push_back("embeddings.LayerNorm.weight");
+    names.push_back("embeddings.LayerNorm.bias");
     for (int idx; idx < num_layers; idx++)
     {
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".attention.self.query.weight");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".attention.self.query.bias");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".attention.self.key.weight");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".attention.self.key.bias");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".attention.self.value.weight");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".attention.self.value.bias");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".attention.output.dense.weight");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".attention.output.dense.bias");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".attention.output.LayerNorm.gamma");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".attention.output.LayerNorm.beta");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".intermediate.dense.weight");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".intermediate.dense.bias");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".output.dense.weight");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".output.dense.bias");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".output.LayerNorm.gamma");
-        names.push_back("bert.encoder.layer." + to_string(idx) + ".output.LayerNorm.beta");
+        names.push_back("encoder.layer." + to_string(idx) + ".attention.self.query.weight");
+        names.push_back("encoder.layer." + to_string(idx) + ".attention.self.query.bias");
+        names.push_back("encoder.layer." + to_string(idx) + ".attention.self.key.weight");
+        names.push_back("encoder.layer." + to_string(idx) + ".attention.self.key.bias");
+        names.push_back("encoder.layer." + to_string(idx) + ".attention.self.value.weight");
+        names.push_back("encoder.layer." + to_string(idx) + ".attention.self.value.bias");
+        names.push_back("encoder.layer." + to_string(idx) + ".attention.output.dense.weight");
+        names.push_back("encoder.layer." + to_string(idx) + ".attention.output.dense.bias");
+        names.push_back("encoder.layer." + to_string(idx) + ".attention.output.LayerNorm.weight");
+        names.push_back("encoder.layer." + to_string(idx) + ".attention.output.LayerNorm.bias");
+        names.push_back("encoder.layer." + to_string(idx) + ".intermediate.dense.weight");
+        names.push_back("encoder.layer." + to_string(idx) + ".intermediate.dense.bias");
+        names.push_back("encoder.layer." + to_string(idx) + ".output.dense.weight");
+        names.push_back("encoder.layer." + to_string(idx) + ".output.dense.bias");
+        names.push_back("encoder.layer." + to_string(idx) + ".output.LayerNorm.weight");
+        names.push_back("encoder.layer." + to_string(idx) + ".output.LayerNorm.bias");
     }
-    names.push_back("bert.pooler.dense.weight");
-    names.push_back("bert.pooler.dense.bias");
+    names.push_back("pooler.dense.weight");
+    names.push_back("pooler.dense.bias");
 
     Bert<float> bert(names, graph, pre_batch_size, pre_seq_len, embedding_size, num_heads, head_hidden_size, intermediate_ratio, num_layers);
-    FullTokenizer tokenizer("/home/dell/Desktop/bert-cpp/model/bert-base-uncased-vocab.txt");
+    FullTokenizer tokenizer("/workspace/model/bert-base-uncased-vocab.txt");
 
     cout << "init model from pb file and tokenizer successly!" << endl;
 
-    vector<string> input_string = {u8"how are you! i am very happy to see you guys, please give me five ok? thanks", u8"this is some jokes, please tell somebody else that reputation to user privacy protection. There is no central authority or supervisor having overall manipulations over others, which makes Bitcoin favored by many. Unlike lling piles of identity information sheets before opening bank accounts, users of Bitcoin need only a pseudonym, a.k.a an address or a hashed public key, to participate the system."};
+    vector<string> input_string = {u8"how are you! i am very happy to see you guys, please give me five ok? thanks", u8"this is some jokes, please tell somebody else that reputation to user privacy protection. There is no central authority or supervisor having overall manipulations over others, which makes Bitcoin favored by many. Unlike filling piles of identity information sheets before opening bank accounts, users of Bitcoin need only a pseudonym, a.k.a an address or a hashed public key, to participate the system."};
 
     vector<vector<string>> input_tokens(2);
     for (int i = 0; i < 2; i++)
@@ -112,9 +214,10 @@ int main()
     float out[2 * 128 * embedding_size];
     float pool_out[2 * embedding_size];
 
+    //logInputIdsToFile(input_ids, 2, 128, "input_ids.log");  // 打印到日志文件
     auto begin = chrono::system_clock::now();
-    for(int i = 0; i < 10; i++) bert.compute(2, 128, input_ids, position_ids, type_ids, mask, out, pool_out);
+    for(int i = 0; i < 1; i++) bert.compute(2, 128, input_ids, position_ids, type_ids, mask, out, pool_out);
     auto end = chrono::system_clock::now();
     
-    cout<<"time: "<<chrono::duration_cast<chrono::milliseconds>(end-begin).count() <<endl;
+    cout<<"Total cpp BERT inference time for 1 run: "<<chrono::duration_cast<chrono::milliseconds>(end-begin).count() <<endl;
 }

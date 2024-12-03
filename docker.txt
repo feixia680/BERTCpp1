@@ -1,0 +1,14 @@
+常用指令：
+docker exec -it bertcpp-container /bin/bash
+
+rm -rf /workspace/build/*
+
+cmake .. \
+  -DProtobuf_INCLUDE_DIR=/usr/local/include \
+  -DProtobuf_LIBRARY=/usr/local/lib/libprotobuf.so \
+
+make -j$(nproc)
+
+source /workspace/venv/bin/activate
+
+

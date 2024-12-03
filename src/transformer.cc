@@ -1,6 +1,7 @@
 #include "transformer.h"
 #include "memory.h"
 
+//#undef PRFILE_FUNCTION
 #ifdef PRFILE_FUNCTION
     #include <chrono>
     #include <iostream>

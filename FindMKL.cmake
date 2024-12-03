@@ -70,8 +70,9 @@ else()
         endif()
     endif()
 
-    find_library(MKL_INTERFACE_LIB ${MKL_INTERFACE_LIBNAME}
-        PATHS ${MKL_ROOT}/lib/${MKL_ARCH_DIR}/ REQUIRED)
+    #find_library(MKL_INTERFACE_LIB ${MKL_INTERFACE_LIBNAME}
+    #    PATHS ${MKL_ROOT}/lib/${MKL_ARCH_DIR}/ REQUIRED)
+    set(MKL_INTERFACE_LIB "/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_intel_lp64.so")
     message(STATUS "[FindMKL] ${MKL_INTERFACE_LIB}")
 
     ######################## Threading layer ########################
@@ -100,16 +101,19 @@ else()
         set(MKL_THREADING_LIBNAME mkl_sequential)
     endif()
 
-    find_library(MKL_THREADING_LIB ${MKL_THREADING_LIBNAME}
-        PATHS ${MKL_ROOT}/lib/${MKL_ARCH_DIR}/)
+    #find_library(MKL_THREADING_LIB ${MKL_THREADING_LIBNAME}
+    #    PATHS ${MKL_ROOT}/lib/${MKL_ARCH_DIR}/)
+    set(MKL_THREADING_LIB "/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so")
+
 
     ####################### Computational layer #####################
     # -lmkl_core
     #
     #
     message(STATUS "[FindMKL] Configuring computational layer...")
-    find_library(MKL_CORE_LIB mkl_core
-        PATHS ${MKL_ROOT}/lib/${MKL_ARCH_DIR}/)
+    #find_library(MKL_CORE_LIB mkl_core
+    #    PATHS ${MKL_ROOT}/lib/${MKL_ARCH_DIR}/)
+    set(MKL_CORE_LIB "/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so")
 
     set(MKL_LIBRARY
         ${MKL_INTERFACE_LIB}

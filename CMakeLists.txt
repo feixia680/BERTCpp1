@@ -5,7 +5,14 @@ project(bert-cpp)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE Release)
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2")
-option(PROFILE_ENABLE "Enable profile" OFF)
+option(PROFILE_ENABLE "Enable profile" ON)
+set(MKL_INCLUDE "/opt/intel/oneapi/mkl/latest/include")
+set(MKL_LIBRARIES "/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_intel_ilp64.so;/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so;/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so")
+set(MKL_INCLUDE_DIR "/opt/intel/oneapi/mkl/latest/include")
+include_directories(${MKL_INCLUDE_DIR})
+include_directories(${MKL_INCLUDE})
+link_libraries(${MKL_LIBRARIES})
+
 file(GLOB DIR_SRCS src/*.cc)
 
 if(PROFILE_ENABLE)
@@ -22,14 +29,15 @@ endif(PROFILE_ENABLE)
 include(FindProtobuf)
 find_package(Protobuf REQUIRED)
 
-set(MKL_ROOT /opt/intel/mkl)
+set(MKL_ROOT /opt/intel/oneapi/mkl)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/workspace")
 include(FindMKL)
 find_package(MKL REQUIRED)
 
 find_package(Threads REQUIRED)
 
-set(utf8proc_LIBRARY /usr/local/lib/libutf8proc.a)
-set(utf8proc_INCLUDE_DIR /usr/local/include)
+set(utf8proc_LIBRARY /usr/lib/x86_64-linux-gnu/libutf8proc.a)
+set(utf8proc_INCLUDE_DIR /usr/include)
 
 include_directories(${utf8proc_INCLUDE_DIR} ${MKL_INCLUDES})
 

@@ -1,5 +1,5 @@
 #include "bert.h"
-
+//#undef PRFILE_FUNCTION
 #ifdef PRFILE_FUNCTION
     #include <chrono>
     #include <iostream>

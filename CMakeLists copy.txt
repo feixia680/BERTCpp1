@@ -1,0 +1,55 @@
+cmake_minimum_required (VERSION 3.4.1)
+project(bert-cpp)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_BUILD_TYPE Release)
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2")
+option(PROFILE_ENABLE "Enable profile" ON)
+option(cuBERT_SYSTEM_MKL "Use system MKL" OFF)
+option(cuBERT_ENABLE_MKL_SUPPORT "Enable Intel MKL support" ON)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)  # 设置 CMake 模块路径
+
+include(cub)
+include(utf8proc)
+include(protobuf-c)
+include(googletest)
+
+# MKL Support
+if(cuBERT_ENABLE_MKL_SUPPORT)
+    add_definitions(-DHAVE_MKL)
+    if(cuBERT_SYSTEM_MKL)
+        find_package(MKL REQUIRED)
+    else()
+        include(mkl)
+        list(APPEND cuBERT_EXTERNAL_DEPENDENCIES mkl_copy_shared_to_destination)
+    endif()
+    list(APPEND cuBERT_EXTERNAL_LIBRARIES ${MKL_LIBRARIES})
+    include_directories(${MKL_INCLUDE_DIR})
+endif(cuBERT_ENABLE_MKL_SUPPORT)
+
+# 文件和源码
+file(GLOB DIR_SRCS src/*.cc)
+
+# 条件编译选项
+if(PROFILE_ENABLE)
+    add_definitions(-DPRFILE_FUNCTION)
+endif(PROFILE_ENABLE)
+
+# 包含头文件目录
+include_directories(${utf8proc_INCLUDE_DIR} ${MKL_INCLUDES} ${PROTOBUF_INCLUDE_DIR} ${GTEST_INCLUDE_DIRS})
+
+# 添加库
+add_library(bertcpp SHARED ${DIR_SRCS})
+target_link_libraries(bertcpp ${PROTOBUF_LIBRARY} ${MKL_LIBRARIES} ${utf8proc_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+
+if(PROFILE_ENABLE)
+    add_executable(profiletest profile.cpp)
+    target_link_libraries(profiletest bertcpp)
+endif(PROFILE_ENABLE)
+
+# 启用测试
+enable_testing()
+file(GLOB TEST_SRCS test/*.cpp)
+add_executable(bert_test ${TEST_SRCS})
+target_link_libraries(bert_test bertcpp ${GTEST_BOTH_LIBRARIES})
+add_test(unitest bert_test)

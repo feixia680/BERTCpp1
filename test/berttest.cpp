@@ -12,7 +12,7 @@ class BERT_TEST : public ::testing::Test {
 protected:
     void SetUp() override {
         Model model;
-        fstream input("/root/BERTCpp/model/model.proto", ios::in | ios::binary);
+        fstream input("/workspace/model/model.bin", ios::in | ios::binary);
         if (!model.ParseFromIstream(&input)) {
             throw std::invalid_argument("can not read protofile");
         }
@@ -89,7 +89,7 @@ TEST_F(BERT_TEST, loadmodel){
     names.push_back("bert.pooler.dense.bias");
 
     Bert<float> bert(names, graph, pre_batch_size, pre_seq_len, embedding_size, num_heads, head_hidden_size, intermediate_ratio, num_layers);
-    FullTokenizer tokenizer("/root/BERTCpp/model/vocab.txt");
+    FullTokenizer tokenizer("/workspace/test/test_vocab.txt");
 
     vector<string> input_string = {u8"同学们，今天我们来学习一个新词汇，叫做量化交易，好了我们开始吧！", u8"因为有些算法还是不容易理解的，你得知道什么地方用什么，还得知道为啥那么用。单词就无脑背诵都记不下来，那LeetCode自然一次记不住就太正常了。其实上面的类比你懂了的话，你就知道，刷LeetCode也是无他，多刷两遍就好了，多总结总复习，常用的东西还真得背下来。"};
     
@@ -123,6 +123,7 @@ TEST_F(BERT_TEST, loadmodel){
 
     float out[2*128*embedding_size];
     float pool_out[2*embedding_size];
+    //可以在这里加一个时间输出
     bert.compute(2, 128, input_ids, position_ids, type_ids, mask, out, pool_out);
 
     EXPECT_NEAR(out[0], 2.4571e-01, 1e-4);

@@ -1,6 +1,6 @@
 #include "dense.h"
 #include <exception>
-//#include <mkl.h>
+#include <mkl.h>
 #include <memory.h>
 
 namespace lh{
@@ -43,7 +43,7 @@ namespace lh{
     void Dense<float>::multiplyweight(std::size_t batch_size, std::size_t seq_len, float* input, float* output){
         //进行矩阵乘法操作，计算输入数据和权重矩阵的乘积
         //使用 cblas_sgemm（Intel Math Kernel Library 中的一部分）执行高效的矩阵乘法
-        //cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, batch_size*seq_len, output_size_, input_size_, 1.0f, input, input_size_, weight, output_size_, 0.0f, output, output_size_);
+        cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, batch_size*seq_len, output_size_, input_size_, 1.0f, input, input_size_, weight, output_size_, 0.0f, output, output_size_);
     }
 
     template<>
